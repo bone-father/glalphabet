@@ -155,7 +155,7 @@ async def server(ctx):
     server = discord.Embed(
         title = "glamont",
         colour = embed_colour,
-        description = "current number: **{current}**\n last counted by: **{last_counter}**\n high score: **{high_score}**".format(current=current, last_counter=last_counter, high_score=high_score)
+        description = "current letter: **{current}**\n last counted by: **{last_counter}**\n high score: **{high_score}**".format(current=current, last_counter=last_counter, high_score=high_score)
     )
 
     server.set_thumbnail(url=server_icon)
