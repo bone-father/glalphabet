@@ -108,7 +108,7 @@ async def user(ctx, *user):
     if len(user) > 0:
         id = user[0].strip('<@>')
     else:
-        id = ctx.message.author.id
+        id = ctx.author.id
 
     db, mycursor = func.connect()
     mycursor.execute("SELECT `correct`, `incorrect` FROM users WHERE id = %s", (id,))
@@ -116,13 +116,17 @@ async def user(ctx, *user):
 
     correct_rate = str(func.truncate((correct / (correct + incorrect)) * 100))
     score = str(correct - incorrect)
-    username = await bot.fetch_user(id)
+    username = ctx.message.guild.get_member(int(id))
+    user_colour = username.color
+    user_pfp = username.avatar_url
 
     user = discord.Embed(
         title = username,
-        colour = embed_colour,
+        colour = user_colour,
         description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score}**".format(correct_rate=correct_rate, correct=str(correct), incorrect=str(incorrect), score=score)
     )
+
+    user.set_thumbnail(url=user_pfp)
 
     await ctx.send(embed=user)
 
