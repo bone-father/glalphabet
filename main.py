@@ -57,6 +57,10 @@ async def on_message(message):
                 mycursor.execute("INSERT INTO users (id, correct, incorrect) VALUES (%s, %s, %s)", (message.author.id, 1, 0))
                 db.commit()
 
+        elif (current == ""):
+            await message.add_reaction('⚠️')
+            await message.channel.send("wrong")
+
         else:
 
             await message.add_reaction('❌')
@@ -64,9 +68,9 @@ async def on_message(message):
             db.commit()
 
             if str(message.author.id) == last_counter_id:
-                await message.channel.send("<@{id}> RUINED IT!!!!! DONT COUNT TWICE IN A ROW".format(id=message.author.id))
+                await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! DONT COUNT TWICE IN A ROW".format(id=message.author.id, current=current))
             elif count != func.nextLetter(current):
-                await message.channel.send("<@{id}> RUINED IT!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id))
+                await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
 
 
             try:
