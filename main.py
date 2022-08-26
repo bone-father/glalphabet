@@ -190,4 +190,4 @@ async def lb(ctx):
 
     await ctx.send(embed=leaderboard)
 
-bot.run('MTAxMjEyMjE0MDA0MjA2ODA0MA.GYhCmF.XTUd3CrIc5al4JmbnQkKagCzldk015Knng-1Bg')
+bot.run(TOKEN)
