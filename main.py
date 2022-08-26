@@ -175,7 +175,8 @@ async def lb(ctx):
 
     for i in range(len(leaderboard)):
         user = leaderboard[i]
-        description += '**#' + str(i+1) + '** ' + str(user[0]) + ', **' + str(user[1]) + '**\n'
+        username = await bot.fetch_user(user[0])
+        description += '**#' + str(i+1) + '** ' + str(username) + ', **' + str(user[1]) + '**\n'
 
     leaderboard = discord.Embed(
         title = "glamont leaderboard",
