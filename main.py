@@ -55,6 +55,7 @@ async def on_message(message):
             func.updateScore(message.author.id, "correct")
 
         elif (current == ""):
+            
             await message.add_reaction('⚠️')
             await message.channel.send("wrong")
 
