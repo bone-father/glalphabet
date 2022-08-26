@@ -137,6 +137,8 @@ async def server(ctx):
     mycursor.execute("SELECT current, `last counter id`, `high score` FROM server")
     current, last_counter_id, high_score = mycursor.fetchone()
 
+    server_icon = ctx.guild.icon_url
+
     if current == "":
         current = "none"
     
@@ -150,6 +152,8 @@ async def server(ctx):
         colour = embed_colour,
         description = "current number: **{current}**\n last counted by: **{last_counter}**\n high score: **{high_score}**".format(current=current, last_counter=last_counter, high_score=high_score)
     )
+
+    server.set_thumbnail(url=server_icon)
 
     await ctx.send(embed=server)
 
