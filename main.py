@@ -119,8 +119,12 @@ async def user(ctx, *user):
     mycursor.execute("SELECT `correct`, `incorrect` FROM users WHERE id = %s", (id,))
     correct, incorrect = mycursor.fetchone()
 
-    correct_rate = str(func.truncate((correct / (correct + incorrect)) * 100))
-    score = str(correct - incorrect)
+    correct_rate = func.truncate((correct / (correct + incorrect)) * 100)
+    score = correct - incorrect
+
+    leaderboard = func.sortUsers()
+    index = [idx for idx, tup in enumerate(leaderboard) if (tup[0]) == str(id)][0] + 1
+
     username = ctx.message.guild.get_member(int(id))
     user_colour = username.color
     user_pfp = username.avatar_url
@@ -128,7 +132,7 @@ async def user(ctx, *user):
     user = discord.Embed(
         title = username,
         colour = user_colour,
-        description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score}**".format(correct_rate=correct_rate, correct=str(correct), incorrect=str(incorrect), score=score)
+        description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score} (#{index})**".format(correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index))
     )
 
     user.set_thumbnail(url=user_pfp)
@@ -165,16 +169,7 @@ async def server(ctx):
 @bot.command()
 async def lb(ctx):
 
-    leaderboard = []
-
-    db, mycursor = func.connect()
-    mycursor.execute("SELECT * FROM users")
-
-    for row in mycursor:
-        username = await bot.fetch_user(row[0])
-        leaderboard.append((username, row[1]-row[2]))
-
-    leaderboard.sort(key=lambda user: user[1], reverse=True)
+    leaderboard = func.sortUsers()
 
     description = ""
 

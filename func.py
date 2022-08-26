@@ -70,3 +70,18 @@ def connect():
 def truncate(num):
 
     return int(num*1000)/1000
+
+
+def sortUsers():
+    
+    leaderboard = []
+
+    db, mycursor = connect()
+    mycursor.execute("SELECT * FROM users")
+
+    for row in mycursor:
+        leaderboard.append((row[0], row[1]-row[2]))
+
+    leaderboard.sort(key=lambda user: user[1], reverse=True)
+    
+    return leaderboard
