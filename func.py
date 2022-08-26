@@ -85,3 +85,25 @@ def sortUsers():
     leaderboard.sort(key=lambda user: user[1], reverse=True)
     
     return leaderboard
+
+
+def updateScore(id, column):
+
+    if (column == "correct"):
+        correct = 1
+        incorrect = 0
+    elif (column == "incorrect"):
+        correct = 0
+        incorrect = 1
+
+    db, mycursor = connect()
+
+    try:
+        mycursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+        len(mycursor.fetchone())
+
+        mycursor.execute("UPDATE users SET `{column}` = `{column}` + 1 WHERE id = %s".format(column=column), (id,))
+    except:
+        mycursor.execute("INSERT INTO users (id, correct, incorrect) VALUES (%s, %s, %s)", (id, correct, incorrect))
+    
+    db.commit()

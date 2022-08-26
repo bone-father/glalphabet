@@ -52,15 +52,7 @@ async def on_message(message):
                 mycursor.execute("UPDATE server SET `past high score` = %s", ("true",))
                 db.commit()        
 
-            try:
-                mycursor.execute("SELECT * FROM users WHERE id = %s", (message.author.id,))
-                len(mycursor.fetchone())
-
-                mycursor.execute("UPDATE users SET `correct` = `correct` + 1 WHERE id = %s", (message.author.id,))
-                db.commit()
-            except:
-                mycursor.execute("INSERT INTO users (id, correct, incorrect) VALUES (%s, %s, %s)", (message.author.id, 1, 0))
-                db.commit()
+            func.updateScore(message.author.id, "correct")
 
         elif (current == ""):
             await message.add_reaction('⚠️')
@@ -77,16 +69,7 @@ async def on_message(message):
             elif count != func.nextLetter(current):
                 await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
 
-
-            try:
-                mycursor.execute("SELECT * FROM users WHERE id = %s", (message.author.id,))
-                len(mycursor.fetchone())
-
-                mycursor.execute("UPDATE users SET `incorrect` = `incorrect` + 1 WHERE id = %s", (message.author.id,))
-                db.commit()
-            except:
-                mycursor.execute("INSERT INTO users (id, correct, incorrect) VALUES (%s, %s, %s)", (message.author.id, 0, 1))
-                db.commit()
+            func.updateScore(message.author.id, "incorrect")
 
     await bot.process_commands(message)
 
