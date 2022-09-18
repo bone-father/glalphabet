@@ -24,9 +24,7 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    db, mycursor = func.connect()
-    mycursor.execute("SELECT `channel id` FROM server")
-    channel_id = str(mycursor.fetchone())[2:-3]
+    channel_id = "1012447966612697188"
 
     count = message.content.split()[0]
 
