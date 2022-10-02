@@ -81,7 +81,7 @@ async def help(ctx):
         colour = embed_colour
     )
 
-    commands = "g!user ?[@user/userId]\ng!server\ng!lb"
+    commands = "g!user ?[@user/userid]\ng!server\ng!lb"
 
     help.add_field(name="commands", value=commands)
     help.set_footer(text="abcdefghijklmnopqrstuvwxyz")
