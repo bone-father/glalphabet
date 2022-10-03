@@ -87,14 +87,36 @@ def sortUsers():
     return leaderboard
 
 
-def updateScore(id, column):
+def sortUsersDeezNuts():
+    
+    leaderboard = []
+
+    db, mycursor = connect()
+    mycursor.execute("SELECT * FROM users")
+
+    for row in mycursor:
+        if (row[3] > 0):
+            leaderboard.append((row[0], row[3]))
+
+    leaderboard.sort(key=lambda user: user[1], reverse=True)
+
+    return leaderboard
+
+
+def updateScore(id, column, deez_nuts):
 
     if (column == "correct"):
         correct = 1
         incorrect = 0
+
     elif (column == "incorrect"):
         correct = 0
         incorrect = 1
+        
+    if deez_nuts==True:
+        deez_nuts = 1
+    else:
+        deez_nuts = 0
 
     db, mycursor = connect()
 
@@ -102,8 +124,8 @@ def updateScore(id, column):
         mycursor.execute("SELECT * FROM users WHERE id = %s", (id,))
         len(mycursor.fetchone())
 
-        mycursor.execute("UPDATE users SET `{column}` = `{column}` + 1 WHERE id = %s".format(column=column), (id,))
+        mycursor.execute("UPDATE users SET `{column}` = `{column}` + 1, `deez nuts` = `deez nuts` + %s WHERE id = %s".format(column=column), (deez_nuts, id))
     except:
-        mycursor.execute("INSERT INTO users (id, correct, incorrect) VALUES (%s, %s, %s)", (id, correct, incorrect))
-    
+        mycursor.execute("INSERT INTO users (id, correct, incorrect, `deez nuts`) VALUES (%s, %s, %s, %s)", (id, correct, incorrect, deez_nuts))
+
     db.commit()

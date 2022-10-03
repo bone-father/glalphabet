@@ -10,7 +10,7 @@ TOKEN = os.getenv('TOKEN')
 intents = discord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix='g!', help_command=None, intents=intents)
+bot = commands.Bot(command_prefix=['g!', 'G!'], help_command=None, intents=intents)
 
 embed_colour = discord.Colour.from_rgb(255, 120, 30)
 
@@ -45,6 +45,11 @@ async def on_message(message):
                     mycursor.execute("UPDATE server SET `high score` = %s", (count,))
                     db.commit()          
 
+                if func.containDeezNuts(message.content):
+                    deez_nuts = True
+                else:
+                    deez_nuts = False  
+
                 mycursor.execute("UPDATE server SET current = %s, `last counter id` = %s", (count, message.author.id))
                 db.commit()
 
@@ -52,7 +57,7 @@ async def on_message(message):
                     mycursor.execute("UPDATE server SET `past high score` = %s", ("true",))
                     db.commit()        
 
-                func.updateScore(message.author.id, "correct")
+                func.updateScore(message.author.id, "correct", deez_nuts)
 
             elif (current == ""):
                 
@@ -70,7 +75,7 @@ async def on_message(message):
                 elif count != func.nextLetter(current):
                     await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
 
-                func.updateScore(message.author.id, "incorrect")
+                func.updateScore(message.author.id, "incorrect", False)
 
     await bot.process_commands(message)
 
@@ -83,7 +88,7 @@ async def help(ctx):
         colour = embed_colour
     )
 
-    commands = "g!user ?[@user/userid]\ng!server\ng!lb"
+    commands = "g!user ?[@user/userid]\ng!server\ng!lb\ng!lb deez nuts"
 
     help.add_field(name="commands", value=commands)
     help.set_footer(text="abcdefghijklmnopqrstuvwxyz")
@@ -100,14 +105,17 @@ async def user(ctx, *user):
         id = ctx.author.id
 
     db, mycursor = func.connect()
-    mycursor.execute("SELECT `correct`, `incorrect` FROM users WHERE id = %s", (id,))
-    correct, incorrect = mycursor.fetchone()
+    mycursor.execute("SELECT `correct`, `incorrect`, `deez nuts` FROM users WHERE id = %s", (id,))
+    correct, incorrect, deez_nuts = mycursor.fetchone()
 
     correct_rate = func.truncate((correct / (correct + incorrect)) * 100)
     score = correct - incorrect
 
     leaderboard = func.sortUsers()
     index = [idx for idx, tup in enumerate(leaderboard) if (tup[0]) == str(id)][0] + 1
+
+    leaderboard_deez_nuts = func.sortUsersDeezNuts()
+    index_deez_nuts = [idx for idx, tup in enumerate(leaderboard_deez_nuts) if (tup[0]) == str(id)][0] + 1
 
     username = ctx.message.guild.get_member(int(id))
     user_colour = username.color
@@ -116,7 +124,7 @@ async def user(ctx, *user):
     user = discord.Embed(
         title = username,
         colour = user_colour,
-        description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score} (#{index})**".format(correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index))
+        description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score} (#{index})**\n deez nuts: **{deez_nuts} (#{index_deez_nuts})**".format(correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index), deez_nuts=str(deez_nuts), index_deez_nuts=str(index_deez_nuts))
     )
 
     user.set_thumbnail(url=user_pfp)
@@ -151,9 +159,15 @@ async def server(ctx):
     await ctx.send(embed=server)
 
 @bot.command()
-async def lb(ctx):
+async def lb(ctx, *nuts):
 
-    leaderboard = func.sortUsers()
+    if (''.join(nuts) == "deeznuts"):
+        leaderboard = func.sortUsersDeezNuts()
+        title = "deez nuts"
+
+    else:
+        leaderboard = func.sortUsers()
+        title = "glamont leaderboard"
 
     description = ""
 
@@ -163,10 +177,12 @@ async def lb(ctx):
         description += '**#' + str(i+1) + '** ' + str(username) + ', **' + str(user[1]) + '**\n'
 
     leaderboard = discord.Embed(
-        title = "glamont leaderboard",
+        title = title,
         colour = embed_colour,
         description = description
     )
+
+    leaderboard.set_footer(text="deez nuts")
 
     await ctx.send(embed=leaderboard)
 
