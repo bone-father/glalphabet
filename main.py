@@ -182,8 +182,6 @@ async def lb(ctx, *nuts):
         description = description
     )
 
-    leaderboard.set_footer(text="deez nuts")
-
     await ctx.send(embed=leaderboard)
 
 bot.run(TOKEN)
