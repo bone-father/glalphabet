@@ -26,49 +26,51 @@ async def on_message(message):
 
     channel_id = "1012447966612697188"
 
-    count = message.content.split()[0]
+    if str(message.channel.id) == channel_id:
 
-    if func.isValidCount(count) and str(message.channel.id) == channel_id:
+        count = message.content.split()[0]
 
-        db, mycursor = func.connect()
-        mycursor.execute("SELECT current, `last counter id`, `high score`, `past high score` FROM server")
-        current, last_counter_id, high_score, past_high_score = mycursor.fetchone()
+        if func.isValidCount(count):
 
-        if count == func.nextLetter(current) and str(message.author.id) != last_counter_id:
+            db, mycursor = func.connect()
+            mycursor.execute("SELECT current, `last counter id`, `high score`, `past high score` FROM server")
+            current, last_counter_id, high_score, past_high_score = mycursor.fetchone()
 
-            if past_high_score == "false":
-                await message.add_reaction('✅')
-            elif past_high_score == "true":
-                await message.add_reaction('☑️')
-                mycursor.execute("UPDATE server SET `high score` = %s", (count,))
-                db.commit()          
+            if count == func.nextLetter(current) and str(message.author.id) != last_counter_id:
 
-            mycursor.execute("UPDATE server SET current = %s, `last counter id` = %s", (count, message.author.id))
-            db.commit()
+                if past_high_score == "false":
+                    await message.add_reaction('✅')
+                elif past_high_score == "true":
+                    await message.add_reaction('☑️')
+                    mycursor.execute("UPDATE server SET `high score` = %s", (count,))
+                    db.commit()          
 
-            if count == high_score:
-                mycursor.execute("UPDATE server SET `past high score` = %s", ("true",))
-                db.commit()        
+                mycursor.execute("UPDATE server SET current = %s, `last counter id` = %s", (count, message.author.id))
+                db.commit()
 
-            func.updateScore(message.author.id, "correct")
+                if count == high_score:
+                    mycursor.execute("UPDATE server SET `past high score` = %s", ("true",))
+                    db.commit()        
 
-        elif (current == ""):
-            
-            await message.add_reaction('⚠️')
-            await message.channel.send("wrong")
+                func.updateScore(message.author.id, "correct")
 
-        else:
+            elif (current == ""):
+                
+                await message.add_reaction('⚠️')
+                await message.channel.send("wrong")
 
-            await message.add_reaction('❌')
-            mycursor.execute("UPDATE server SET current = %s, `last counter id` = %s, `past high score` = %s", ("", "", "false"))
-            db.commit()
+            else:
 
-            if str(message.author.id) == last_counter_id:
-                await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! DONT COUNT TWICE IN A ROW".format(id=message.author.id, current=current))
-            elif count != func.nextLetter(current):
-                await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
+                await message.add_reaction('❌')
+                mycursor.execute("UPDATE server SET current = %s, `last counter id` = %s, `past high score` = %s", ("", "", "false"))
+                db.commit()
 
-            func.updateScore(message.author.id, "incorrect")
+                if str(message.author.id) == last_counter_id:
+                    await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! DONT COUNT TWICE IN A ROW".format(id=message.author.id, current=current))
+                elif count != func.nextLetter(current):
+                    await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
+
+                func.updateScore(message.author.id, "incorrect")
 
     await bot.process_commands(message)
 
