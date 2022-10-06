@@ -85,7 +85,7 @@ async def on_message(message):
 async def help(ctx):
 
     help = discord.Embed(
-        title = "glalphabet uwu",
+        title = "glalphabet",
         description = "prefix is 'g!'",
         colour = embed_colour
     )
@@ -93,8 +93,8 @@ async def help(ctx):
     commands = "g!user ?[@user/userid]\ng!server\ng!lb\ng!lb deez nuts"
 
     help.add_field(name="commands", value=commands)
-    help.set_footer(text="abcdefghijklmnopqrstuvwxyz")
-    help.set_image(url="https://media.discordapp.net/attachments/815332398333689886/981968722564636763/glamont_uwu.gif")
+    help.set_footer(text="glamont")
+    help.set_image(url="https://media.discordapp.net/attachments/922414067761709077/1027651348935753819/glamont_uwu.gif")
 
     await ctx.send(embed=help)
 
