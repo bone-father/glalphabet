@@ -55,7 +55,9 @@ async def on_message(message):
                     cursor.execute("UPDATE server SET `past high score` = %s", ("true",))
                     
                 db.commit()
-                func.updateScore(db, cursor, message.author.id, "correct", deez_nuts)
+                db.close()
+                
+                func.updateScore(message.author.id, "correct", deez_nuts)
 
             elif current == "":
                 
@@ -67,13 +69,14 @@ async def on_message(message):
                 await message.add_reaction('❌')
                 cursor.execute("UPDATE server SET current = %s, `last counter id` = %s, `past high score` = %s", ("", "", "false"))
                 db.commit()
+                db.close()
 
                 if str(message.author.id) == last_counter_id:
                     await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! DONT COUNT TWICE IN A ROW".format(id=message.author.id, current=current))
                 elif count != func.nextLetter(current):
                     await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
 
-                func.updateScore(db, cursor, message.author.id, "incorrect", False)
+                func.updateScore(message.author.id, "incorrect", False)
             
     await bot.process_commands(message)
 
@@ -107,14 +110,15 @@ async def user(ctx, *user):
     db, cursor = func.connect()
     cursor.execute("SELECT `correct`, `incorrect`, `deez nuts` FROM users WHERE id = %s", (id,))
     correct, incorrect, deez_nuts = cursor.fetchone()
+    db.close()
 
     correct_rate = func.truncate((correct / (correct + incorrect)) * 100)
     score = correct - incorrect
 
-    leaderboard = func.sortUsers(db, cursor)
+    leaderboard = func.sortUsers()
     index = [idx for idx, tup in enumerate(leaderboard) if (tup[0]) == str(id)][0] + 1
 
-    leaderboard_deez_nuts = func.sortUsersDeezNuts(db, cursor)
+    leaderboard_deez_nuts = func.sortUsersDeezNuts()
     index_deez_nuts = [idx for idx, tup in enumerate(leaderboard_deez_nuts) if (tup[0]) == str(id)][0] + 1
 
     username = ctx.message.guild.get_member(int(id))
@@ -168,11 +172,11 @@ async def lb(ctx, *nuts):
     db, cursor = func.connect()
 
     if ''.join(nuts) == "deeznuts":
-        leaderboard = func.sortUsersDeezNuts(db, cursor)
+        leaderboard = func.sortUsersDeezNuts()
         title = "deez nuts"
 
     else:
-        leaderboard = func.sortUsers(db, cursor)
+        leaderboard = func.sortUsers()
         title = "glamont leaderboard"
 
     description = ""

@@ -1,3 +1,23 @@
+import mysql.connector
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+USER = os.getenv('USER')
+PASSWD = os.getenv('PASSWD')
+
+def connect():
+
+    db = mysql.connector.connect(
+        host="us-cdbr-east-06.cleardb.net",
+        user=USER,
+        passwd=PASSWD,
+        database="heroku_35067e70ff92b61"
+    )
+
+    return(db, db.cursor())
+
+
 def nextLetter(current):
 
     glalphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a']
@@ -54,54 +74,45 @@ def containDeezNuts(message):
         return False
 
 
-import mysql.connector
-def connect():
-
-    db = mysql.connector.connect(
-        host="us-cdbr-east-06.cleardb.net",
-        user="b98c3bc0e5dcec",
-        passwd="b2fc02c7",
-        database="heroku_35067e70ff92b61"
-    )
-
-    return(db, db.cursor())
-
-
 def truncate(num):
 
     return int(num*1000)/1000
 
 
-def sortUsers(db, cursor):
+def sortUsers():
     
     leaderboard = []
 
+    db, cursor = connect()
     cursor.execute("SELECT * FROM users")
 
     for row in cursor:
         leaderboard.append((row[0], row[1]-row[2]))
 
+    db.close()
     leaderboard.sort(key=lambda user: user[1], reverse=True)
     
     return leaderboard
 
 
-def sortUsersDeezNuts(db, cursor):
+def sortUsersDeezNuts():
     
     leaderboard = []
 
+    db, cursor = connect()
     cursor.execute("SELECT * FROM users")
 
     for row in cursor:
         if (row[3] > 0):
             leaderboard.append((row[0], row[3]))
 
+    db.close()
     leaderboard.sort(key=lambda user: user[1], reverse=True)
 
     return leaderboard
 
 
-def updateScore(db, cursor, id, column, deez_nuts):
+def updateScore(id, column, deez_nuts):
 
     if column == "correct":
         correct = 1
@@ -115,6 +126,8 @@ def updateScore(db, cursor, id, column, deez_nuts):
         deez_nuts = 1
     else:
         deez_nuts = 0
+
+    db, cursor = connect()
 
     try:
         cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
