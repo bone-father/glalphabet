@@ -32,9 +32,9 @@ async def on_message(message):
 
         if func.isValidCount(count):
 
-            db, mycursor = func.connect()
-            mycursor.execute("SELECT current, `last counter id`, `high score`, `past high score` FROM server")
-            current, last_counter_id, high_score, past_high_score = mycursor.fetchone()
+            db, cursor = func.connect()
+            cursor.execute("SELECT current, `last counter id`, `high score`, `past high score` FROM server")
+            current, last_counter_id, high_score, past_high_score = cursor.fetchone()
 
             if count == func.nextLetter(current) and str(message.author.id) != last_counter_id:
 
@@ -42,24 +42,22 @@ async def on_message(message):
                     await message.add_reaction('✅')
                 elif past_high_score == "true":
                     await message.add_reaction('☑️')
-                    mycursor.execute("UPDATE server SET `high score` = %s", (count,))
-                    db.commit()          
+                    cursor.execute("UPDATE server SET `high score` = %s", (count,))        
 
                 if func.containDeezNuts(message.content):
                     deez_nuts = True
                 else:
                     deez_nuts = False  
 
-                mycursor.execute("UPDATE server SET current = %s, `last counter id` = %s", (count, message.author.id))
-                db.commit()
+                cursor.execute("UPDATE server SET current = %s, `last counter id` = %s", (count, message.author.id))
 
                 if count == high_score:
-                    mycursor.execute("UPDATE server SET `past high score` = %s", ("true",))
-                    db.commit()        
+                    cursor.execute("UPDATE server SET `past high score` = %s", ("true",))
+                    
+                db.commit()
+                func.updateScore(db, cursor, message.author.id, "correct", deez_nuts)
 
-                func.updateScore(message.author.id, "correct", deez_nuts)
-
-            elif (current == ""):
+            elif current == "":
                 
                 await message.add_reaction('⚠️')
                 await message.channel.send("wrong")
@@ -67,7 +65,7 @@ async def on_message(message):
             else:
 
                 await message.add_reaction('❌')
-                mycursor.execute("UPDATE server SET current = %s, `last counter id` = %s, `past high score` = %s", ("", "", "false"))
+                cursor.execute("UPDATE server SET current = %s, `last counter id` = %s, `past high score` = %s", ("", "", "false"))
                 db.commit()
 
                 if str(message.author.id) == last_counter_id:
@@ -75,9 +73,10 @@ async def on_message(message):
                 elif count != func.nextLetter(current):
                     await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
 
-                func.updateScore(message.author.id, "incorrect", False)
-
+                func.updateScore(db, cursor, message.author.id, "incorrect", False)
+            
     await bot.process_commands(message)
+
 
 @bot.command()
 async def help(ctx):
@@ -96,6 +95,7 @@ async def help(ctx):
 
     await ctx.send(embed=help)
 
+
 @bot.command()
 async def user(ctx, *user):
 
@@ -104,17 +104,17 @@ async def user(ctx, *user):
     else:
         id = ctx.author.id
 
-    db, mycursor = func.connect()
-    mycursor.execute("SELECT `correct`, `incorrect`, `deez nuts` FROM users WHERE id = %s", (id,))
-    correct, incorrect, deez_nuts = mycursor.fetchone()
+    db, cursor = func.connect()
+    cursor.execute("SELECT `correct`, `incorrect`, `deez nuts` FROM users WHERE id = %s", (id,))
+    correct, incorrect, deez_nuts = cursor.fetchone()
 
     correct_rate = func.truncate((correct / (correct + incorrect)) * 100)
     score = correct - incorrect
 
-    leaderboard = func.sortUsers()
+    leaderboard = func.sortUsers(db, cursor)
     index = [idx for idx, tup in enumerate(leaderboard) if (tup[0]) == str(id)][0] + 1
 
-    leaderboard_deez_nuts = func.sortUsersDeezNuts()
+    leaderboard_deez_nuts = func.sortUsersDeezNuts(db, cursor)
     index_deez_nuts = [idx for idx, tup in enumerate(leaderboard_deez_nuts) if (tup[0]) == str(id)][0] + 1
 
     username = ctx.message.guild.get_member(int(id))
@@ -124,19 +124,22 @@ async def user(ctx, *user):
     user = discord.Embed(
         title = username,
         colour = user_colour,
-        description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score} (#{index})**\n deez nuts: **{deez_nuts} (#{index_deez_nuts})**".format(correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index), deez_nuts=str(deez_nuts), index_deez_nuts=str(index_deez_nuts))
+        description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score} (#{index})**\n deez nuts: **{deez_nuts} (#{index_deez_nuts})**".format
+        (correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index), deez_nuts=str(deez_nuts), index_deez_nuts=str(index_deez_nuts))
     )
 
     user.set_thumbnail(url=user_pfp)
 
     await ctx.send(embed=user)
 
+
 @bot.command()
 async def server(ctx):
 
-    db, mycursor = func.connect()
-    mycursor.execute("SELECT current, `last counter id`, `high score` FROM server")
-    current, last_counter_id, high_score = mycursor.fetchone()
+    db, cursor = func.connect()
+    cursor.execute("SELECT current, `last counter id`, `high score` FROM server")
+    current, last_counter_id, high_score = cursor.fetchone()
+    db.close()
 
     server_icon = ctx.guild.icon_url
 
@@ -158,15 +161,18 @@ async def server(ctx):
 
     await ctx.send(embed=server)
 
+
 @bot.command()
 async def lb(ctx, *nuts):
 
-    if (''.join(nuts) == "deeznuts"):
-        leaderboard = func.sortUsersDeezNuts()
+    db, cursor = func.connect()
+
+    if ''.join(nuts) == "deeznuts":
+        leaderboard = func.sortUsersDeezNuts(db, cursor)
         title = "deez nuts"
 
     else:
-        leaderboard = func.sortUsers()
+        leaderboard = func.sortUsers(db, cursor)
         title = "glamont leaderboard"
 
     description = ""
@@ -183,5 +189,6 @@ async def lb(ctx, *nuts):
     )
 
     await ctx.send(embed=leaderboard)
+
 
 bot.run(TOKEN)

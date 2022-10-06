@@ -14,10 +14,10 @@ def nextLetter(current):
             next_index = glalphabet.index(letter)+1
             current_split[i] = glalphabet[next_index]
 
-            if (letter != 'Z'):
+            if letter != 'Z':
                 break
 
-            if (i == 0):
+            if i == 0:
                 current_split.insert(0, 'a')
 
         return ''.join(current_split)
@@ -72,14 +72,13 @@ def truncate(num):
     return int(num*1000)/1000
 
 
-def sortUsers():
+def sortUsers(db, cursor):
     
     leaderboard = []
 
-    db, mycursor = connect()
-    mycursor.execute("SELECT * FROM users")
+    cursor.execute("SELECT * FROM users")
 
-    for row in mycursor:
+    for row in cursor:
         leaderboard.append((row[0], row[1]-row[2]))
 
     leaderboard.sort(key=lambda user: user[1], reverse=True)
@@ -87,14 +86,13 @@ def sortUsers():
     return leaderboard
 
 
-def sortUsersDeezNuts():
+def sortUsersDeezNuts(db, cursor):
     
     leaderboard = []
 
-    db, mycursor = connect()
-    mycursor.execute("SELECT * FROM users")
+    cursor.execute("SELECT * FROM users")
 
-    for row in mycursor:
+    for row in cursor:
         if (row[3] > 0):
             leaderboard.append((row[0], row[3]))
 
@@ -103,13 +101,13 @@ def sortUsersDeezNuts():
     return leaderboard
 
 
-def updateScore(id, column, deez_nuts):
+def updateScore(db, cursor, id, column, deez_nuts):
 
-    if (column == "correct"):
+    if column == "correct":
         correct = 1
         incorrect = 0
 
-    elif (column == "incorrect"):
+    elif column == "incorrect":
         correct = 0
         incorrect = 1
         
@@ -118,14 +116,13 @@ def updateScore(id, column, deez_nuts):
     else:
         deez_nuts = 0
 
-    db, mycursor = connect()
-
     try:
-        mycursor.execute("SELECT * FROM users WHERE id = %s", (id,))
-        len(mycursor.fetchone())
+        cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+        len(cursor.fetchone())
 
-        mycursor.execute("UPDATE users SET `{column}` = `{column}` + 1, `deez nuts` = `deez nuts` + %s WHERE id = %s".format(column=column), (deez_nuts, id))
+        cursor.execute("UPDATE users SET `{column}` = `{column}` + 1, `deez nuts` = `deez nuts` + %s WHERE id = %s".format(column=column), (deez_nuts, id))
     except:
-        mycursor.execute("INSERT INTO users (id, correct, incorrect, `deez nuts`) VALUES (%s, %s, %s, %s)", (id, correct, incorrect, deez_nuts))
+        cursor.execute("INSERT INTO users (id, correct, incorrect, `deez nuts`) VALUES (%s, %s, %s, %s)", (id, correct, incorrect, deez_nuts))
 
     db.commit()
+    db.close()
