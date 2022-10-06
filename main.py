@@ -56,7 +56,7 @@ async def on_message(message):
                     
                 db.commit()
                 db.close()
-                
+
                 func.updateScore(message.author.id, "correct", deez_nuts)
 
             elif current == "":
@@ -168,8 +168,6 @@ async def server(ctx):
 
 @bot.command()
 async def lb(ctx, *nuts):
-
-    db, cursor = func.connect()
 
     if ''.join(nuts) == "deeznuts":
         leaderboard = func.sortUsersDeezNuts()
