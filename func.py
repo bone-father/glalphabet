@@ -222,7 +222,7 @@ def countdown(time, equation, twelve_hours, last_time, save):
     elif twelve_hours == False:
         diff = timeDifference(str(datetime.datetime.now()), str(datetime.datetime.strptime(last_time, "%Y-%m-%d %H:%M:%S.%f")+datetime.timedelta(hours=12)))
         hours = int(round(diff) / 60)
-        minutes = (round(diff) % 60)
+        minutes = round(diff) % 60
         description = "you've played in the last 12 hours. {hours} hr {minutes} min until saves can be earned again\n\n**".format(
                       hours=str(hours), minutes=str(minutes)) + equation + "**\n\nyou have {time} {unit} left...".format(time=str(time), unit=unit)
     else:
