@@ -3,14 +3,18 @@ from discord.ext import commands
 import func
 import os
 from dotenv import load_dotenv
+import datetime
+import random
+import time
 
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 
-bot = commands.Bot(command_prefix=['g!', 'G!'], help_command=None, intents=intents)
+bot = commands.Bot(command_prefix=['g!', 'G!'], help_command=None, intents=intents, case_insensitive=True, strip_after_prefix=True)
 
 embed_colour = discord.Colour.from_rgb(255, 120, 30)
 
@@ -66,6 +70,17 @@ async def on_message(message):
 
             else:
 
+                db, cursor = func.connect()
+                cursor.execute("SELECT save FROM users WHERE id = %s", (str(message.author.id),))
+                save = cursor.fetchone()[0]
+
+                if save == 1:
+                    await message.add_reaction('⚠️')
+                    await message.channel.send("wrong dumbass your save has been used")
+                    cursor.execute("UPDATE users SET save = 0 WHERE id = %s", (str(message.author.id),))
+                    db.commit()
+                    db.close()
+
                 await message.add_reaction('❌')
                 cursor.execute("UPDATE server SET current = %s, `last counter id` = %s, `past high score` = %s", ("", "", "false"))
                 db.commit()
@@ -84,15 +99,14 @@ async def on_message(message):
 @bot.command()
 async def help(ctx):
 
+    commands = "**g!user [@user/userid]** - get user stats\n**g!server** - get server stats\n**g!lb [deez nuts]** - display leaderboard\n**g!ub** - math question to earn saves"
+
     help = discord.Embed(
         title = "glalphabet",
-        description = "prefix is 'g!'",
+        description = "prefix is 'g!'\n\n" + commands,
         colour = embed_colour
     )
 
-    commands = "g!user ?[@user/userid]\ng!server\ng!lb\ng!lb deez nuts"
-
-    help.add_field(name="commands", value=commands)
     help.set_footer(text="glamont")
     help.set_image(url="https://media.discordapp.net/attachments/922414067761709077/1027651348935753819/glamont_uwu.gif")
 
@@ -108,7 +122,7 @@ async def user(ctx, *user):
         id = ctx.author.id
 
     db, cursor = func.connect()
-    cursor.execute("SELECT `correct`, `incorrect`, `deez nuts` FROM users WHERE id = %s", (id,))
+    cursor.execute("SELECT correct, incorrect, `deez nuts` FROM users WHERE id = %s", (id,))
     correct, incorrect, deez_nuts = cursor.fetchone()
     db.close()
 
@@ -118,18 +132,22 @@ async def user(ctx, *user):
     leaderboard = func.sortUsers()
     index = [idx for idx, tup in enumerate(leaderboard) if (tup[0]) == str(id)][0] + 1
 
-    leaderboard_deez_nuts = func.sortUsersDeezNuts()
-    index_deez_nuts = [idx for idx, tup in enumerate(leaderboard_deez_nuts) if (tup[0]) == str(id)][0] + 1
+    description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score} (#{index})**".format(
+                    correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index))
+
+    if deez_nuts > 0:
+        leaderboard_deez_nuts = func.sortUsersDeezNuts()
+        index_deez_nuts = [idx for idx, tup in enumerate(leaderboard_deez_nuts) if (tup[0]) == str(id)][0] + 1
+        description += "\n deez nuts: **{deez_nuts} (#{index_deez_nuts})**".format(deez_nuts=str(deez_nuts), index_deez_nuts=str(index_deez_nuts))
 
     username = ctx.message.guild.get_member(int(id))
     user_colour = username.color
-    user_pfp = username.avatar_url
+    user_pfp = username.avatar
 
     user = discord.Embed(
         title = username,
         colour = user_colour,
-        description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score} (#{index})**\n deez nuts: **{deez_nuts} (#{index_deez_nuts})**".format
-        (correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index), deez_nuts=str(deez_nuts), index_deez_nuts=str(index_deez_nuts))
+        description = description
     )
 
     user.set_thumbnail(url=user_pfp)
@@ -145,7 +163,7 @@ async def server(ctx):
     current, last_counter_id, high_score = cursor.fetchone()
     db.close()
 
-    server_icon = ctx.guild.icon_url
+    server_icon = ctx.guild.icon
 
     if current == "":
         current = "none"
@@ -158,7 +176,8 @@ async def server(ctx):
     server = discord.Embed(
         title = "glamont",
         colour = embed_colour,
-        description = "current letter: **{current}**\n last counted by: **{last_counter}**\n high score: **{high_score}**".format(current=current, last_counter=last_counter, high_score=high_score)
+        description = "current letter: **{current}**\n last counted by: **{last_counter}**\n high score: **{high_score}**".format(
+                      current=current, last_counter=last_counter, high_score=high_score)
     )
 
     server.set_thumbnail(url=server_icon)
@@ -169,7 +188,7 @@ async def server(ctx):
 @bot.command()
 async def lb(ctx, *nuts):
 
-    if ''.join(nuts) == "deeznuts":
+    if ''.join(nuts).lower() == "deeznuts":
         leaderboard = func.sortUsersDeezNuts()
         title = "deez nuts"
 
@@ -191,6 +210,279 @@ async def lb(ctx, *nuts):
     )
 
     await ctx.send(embed=leaderboard)
+
+
+@bot.command()
+async def ub(ctx):
+
+    db, cursor = func.connect()
+    cursor.execute("SELECT time, `in progress` FROM users WHERE id = %s", (str(ctx.message.author.id),))
+    last_time, in_progress = cursor.fetchone()
+    db.close()
+
+    if in_progress != "true":
+        db, cursor = func.connect()
+        cursor.execute("UPDATE users SET `in progress` = %s WHERE id = %s", ("true", str(ctx.message.author.id)))
+        db.commit()
+        
+        cursor.execute("SELECT save FROM users WHERE id = %s", (str(ctx.message.author.id),))
+        save = cursor.fetchone()[0]
+        db.close()
+
+        if last_time == "":
+            twelve_hours = True
+        else:
+            twelve_hours = (func.timeDifference(last_time, str(datetime.datetime.now())) / 60 >= 12)
+
+        equation, answer = func.generateEquation()
+        options = [str(answer)]
+
+        for i in range(3):
+            while(True):
+                incorrect = random.randint(answer - 10, answer + 10)
+                if str(incorrect) not in options:
+                    options.append(str(incorrect))
+                    break
+
+        random.shuffle(options)
+
+        class Menu(discord.ui.View):
+            def __init__(self, ctx):
+                super().__init__(timeout=None)
+                self.ctx = ctx
+                self.clicked = False
+                self.interacted = False
+
+            @discord.ui.button(label=options[0], style=discord.ButtonStyle.blurple)
+            async def button_callback_1(self, interaction, button):
+                self.clicked = True
+                
+                for option in self.children:
+                    option.disabled = True
+
+                    if option.label == str(answer):
+                        option.style = discord.ButtonStyle.green
+
+                if button.label != str(answer):
+                    button.style = discord.ButtonStyle.red
+
+                if interaction.user != self.ctx.message.author:
+                    await interaction.response.send_message(content="fuck off this isn't for you", ephemeral=True)
+                else:
+                    await interaction.response.edit_message(view=self)
+
+                    if button.label == str(answer):
+                        
+                        db, cursor = func.connect()
+                        cursor.execute("UPDATE users SET math = math + 1 WHERE id = %s", (str(interaction.user.id),))
+
+                        if twelve_hours and save != 1:
+                            cursor.execute("UPDATE users SET save = save + 0.25, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            message = "nice. 0.25 saves earned ({save}/1 in total)".format(save=str(save + 0.25).rstrip("0").rstrip("."))
+
+                        else:
+                            message = "nice yeah"
+
+                        db.commit()
+                        db.close()
+
+                        await self.ctx.send(message)
+                        
+                    else:
+
+                        if twelve_hours:
+                            db, cursor = func.connect()
+                            cursor.execute("UPDATE users SET time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            db.commit()
+                            db.close()
+
+                        await self.ctx.send("wrong lmfao everybody laugh at <@{id}> this fucking idiot".format(id=interaction.user.id))
+
+                    self.interacted = True
+
+            @discord.ui.button(label=options[1], style=discord.ButtonStyle.blurple)
+            async def button_callback_2(self, interaction, button):
+                self.clicked = True
+                
+                for option in self.children:
+                    option.disabled = True
+
+                    if option.label == str(answer):
+                        option.style = discord.ButtonStyle.green
+
+                if button.label != str(answer):
+                    button.style = discord.ButtonStyle.red
+
+                if interaction.user != self.ctx.message.author:
+                    await interaction.response.send_message(content="fuck off this isn't for you", ephemeral=True)
+                else:
+                    await interaction.response.edit_message(view=self)
+
+                    if button.label == str(answer):
+                        
+                        db, cursor = func.connect()
+                        cursor.execute("UPDATE users SET math = math + 1 WHERE id = %s", (str(interaction.user.id),))
+
+                        if twelve_hours and save != 1:
+                            cursor.execute("UPDATE users SET save = save + 0.25, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            message = "nice. 0.25 saves earned ({save}/1 in total)".format(save=str(save + 0.25).rstrip("0").rstrip("."))
+
+                        else:
+                            message = "nice yeah"
+
+                        db.commit()
+                        db.close()
+
+                        await self.ctx.send(message)
+                        
+                    else:
+
+                        if twelve_hours:
+                            db, cursor = func.connect()
+                            cursor.execute("UPDATE users SET time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            db.commit()
+                            db.close()
+
+                        await self.ctx.send("wrong lmfao everybody laugh at <@{id}> this fucking idiot".format(id=interaction.user.id))
+
+                    self.interacted = True
+
+            @discord.ui.button(label=options[2], style=discord.ButtonStyle.blurple)
+            async def button_callback_3(self, interaction, button):
+                self.clicked = True
+                
+                for option in self.children:
+                    option.disabled = True
+
+                    if option.label == str(answer):
+                        option.style = discord.ButtonStyle.green
+
+                if button.label != str(answer):
+                    button.style = discord.ButtonStyle.red
+
+                if interaction.user != self.ctx.message.author:
+                    await interaction.response.send_message(content="fuck off this isn't for you", ephemeral=True)
+                else:
+                    await interaction.response.edit_message(view=self)
+
+                    if button.label == str(answer):
+                        
+                        db, cursor = func.connect()
+                        cursor.execute("UPDATE users SET math = math + 1 WHERE id = %s", (str(interaction.user.id),))
+
+                        if twelve_hours and save != 1:
+                            cursor.execute("UPDATE users SET save = save + 0.25, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            message = "nice. 0.25 saves earned ({save}/1 in total)".format(save=str(save + 0.25).rstrip("0").rstrip("."))
+
+                        else:
+                            message = "nice yeah"
+
+                        db.commit()
+                        db.close()
+
+                        await self.ctx.send(message)
+                        
+                    else:
+
+                        if twelve_hours:
+                            db, cursor = func.connect()
+                            cursor.execute("UPDATE users SET time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            db.commit()
+                            db.close()
+
+                        await self.ctx.send("wrong lmfao everybody laugh at <@{id}> this fucking idiot".format(id=interaction.user.id))
+
+                    self.interacted = True
+                
+            @discord.ui.button(label=options[3], style=discord.ButtonStyle.blurple)
+            async def button_callback_4(self, interaction, button):
+                self.clicked = True
+                
+                for option in self.children:
+                    option.disabled = True
+
+                    if option.label == str(answer):
+                        option.style = discord.ButtonStyle.green
+
+                if button.label != str(answer):
+                    button.style = discord.ButtonStyle.red
+
+                if interaction.user != self.ctx.message.author:
+                    await interaction.response.send_message(content="fuck off this isn't for you", ephemeral=True)
+                else:
+                    await interaction.response.edit_message(view=self)
+
+                    if button.label == str(answer):
+                        
+                        db, cursor = func.connect()
+                        cursor.execute("UPDATE users SET math = math + 1 WHERE id = %s", (str(interaction.user.id),))
+
+                        if twelve_hours and save != 1:
+                            cursor.execute("UPDATE users SET save = save + 0.25, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            message = "nice. 0.25 saves earned ({save}/1 in total)".format(save=str(save + 0.25).rstrip("0").rstrip("."))
+
+                        else:
+                            message = "nice yeah"
+
+                        db.commit()
+                        db.close()
+
+                        await self.ctx.send(message)
+                        
+                    else:
+
+                        if twelve_hours:
+                            db, cursor = func.connect()
+                            cursor.execute("UPDATE users SET time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            db.commit()
+                            db.close()
+
+                        await self.ctx.send("wrong lmfao everybody laugh at <@{id}> this fucking idiot".format(id=interaction.user.id))
+
+                    self.interacted = True
+
+        view = Menu(ctx)
+        question = func.countdown(5, equation, twelve_hours, last_time, save)
+
+        view.message = await ctx.send(embed=question, view=view)
+
+        for i in range(5, 0, -1):
+
+            time.sleep(1)
+            await view.message.edit(embed=func.countdown(i-1, equation, twelve_hours, last_time, save))
+
+            if view.clicked:
+                break
+            
+            if i == 1 and view.clicked == False:
+
+                    for option in view.children:
+                        option.disabled = True
+
+                        if option.label == str(answer):
+                            option.style = discord.ButtonStyle.green
+
+                    if view.clicked == False:
+                        await view.message.edit(view=view)
+
+        if view.clicked == False:
+
+            if twelve_hours:
+                db, cursor = func.connect()
+                cursor.execute("UPDATE users SET time = %s WHERE id = %s", (str(datetime.datetime.now()), str(ctx.message.author.id)))
+                db.commit()
+                db.close()
+
+            await view.ctx.send("too slow. answer was {answer}".format(answer=str(answer)))
+
+        db, cursor = func.connect()
+        cursor.execute("UPDATE users SET `in progress` = %s WHERE id = %s", ("false", str(ctx.message.author.id)))
+        db.commit()
+        db.close()
+
+    else:
+
+        await ctx.send("game in progress already shut the fuck up")
 
 
 bot.run(TOKEN)
