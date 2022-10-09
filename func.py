@@ -226,7 +226,7 @@ def countdown(time, equation, twelve_hours, last_time, save):
         description = "you've played in the last 12 hours. {hours} hr {minutes} min until saves can be earned again\n\n**".format(
                       hours=str(hours), minutes=str(minutes)) + equation + "**\n\nyou have {time} {unit} left...".format(time=str(time), unit=unit)
     else:
-        description = "1 correct answer = 0.25 saves. you currently have {save}/1\n\n**".format(
+        description = "1 correct answer = 0.5 saves. you currently have {save}/1\n\n**".format(
                       save=str(save).rstrip("0").rstrip(".")) + equation + "**\n\nyou have {time} {unit} left...".format(time=str(time), unit=unit)
 
     embed = discord.Embed(title="math time!!!", description=description, colour=discord.Colour.from_rgb(111, 120, 219))

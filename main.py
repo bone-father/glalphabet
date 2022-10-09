@@ -122,8 +122,8 @@ async def user(ctx, *user):
         id = ctx.author.id
 
     db, cursor = func.connect()
-    cursor.execute("SELECT correct, incorrect, `deez nuts` FROM users WHERE id = %s", (id,))
-    correct, incorrect, deez_nuts = cursor.fetchone()
+    cursor.execute("SELECT correct, incorrect, `deez nuts`, save FROM users WHERE id = %s", (id,))
+    correct, incorrect, deez_nuts, save = cursor.fetchone()
     db.close()
 
     correct_rate = func.truncate((correct / (correct + incorrect)) * 100)
@@ -132,13 +132,14 @@ async def user(ctx, *user):
     leaderboard = func.sortUsers()
     index = [idx for idx, tup in enumerate(leaderboard) if (tup[0]) == str(id)][0] + 1
 
-    description = "correct rate: **{correct_rate}%**\n total correct: **{correct}**\n total incorrect: **{incorrect}**\n score: **{score} (#{index})**".format(
-                    correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index))
-
     if deez_nuts > 0:
         leaderboard_deez_nuts = func.sortUsersDeezNuts()
         index_deez_nuts = [idx for idx, tup in enumerate(leaderboard_deez_nuts) if (tup[0]) == str(id)][0] + 1
-        description += "\n deez nuts: **{deez_nuts} (#{index_deez_nuts})**".format(deez_nuts=str(deez_nuts), index_deez_nuts=str(index_deez_nuts))
+        description = "correct rate: **{correct_rate}%**\ntotal correct: **{correct}**\ntotal incorrect: **{incorrect}**\nscore: **{score} (#{index})**\ndeez nuts: **{deez_nuts} (#{index_deez_nuts})**\nsaves: {save}/1".format(
+                        correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index), deez_nuts=str(deez_nuts), index_deez_nuts=str(index_deez_nuts), save=str(save).rstrip("0").rstrip("."))
+    else:
+        description = "correct rate: **{correct_rate}%**\ntotal correct: **{correct}**\ntotal incorrect: **{incorrect}**\nscore: **{score} (#{index})**\nsaves: {save}/1".format(
+                        correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index), save=str(save).rstrip("0").rstrip("."))
 
     username = ctx.message.guild.get_member(int(id))
     user_colour = username.color
@@ -277,8 +278,8 @@ async def ub(ctx):
                         cursor.execute("UPDATE users SET math = math + 1 WHERE id = %s", (str(interaction.user.id),))
 
                         if twelve_hours and save != 1:
-                            cursor.execute("UPDATE users SET save = save + 0.25, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
-                            message = "nice. 0.25 saves earned ({save}/1 in total)".format(save=str(save + 0.25).rstrip("0").rstrip("."))
+                            cursor.execute("UPDATE users SET save = save + 0.5, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            message = "nice. 0.5 saves earned ({save}/1 in total)".format(save=str(save + 0.5).rstrip("0").rstrip("."))
 
                         else:
                             message = "nice yeah"
@@ -324,8 +325,8 @@ async def ub(ctx):
                         cursor.execute("UPDATE users SET math = math + 1 WHERE id = %s", (str(interaction.user.id),))
 
                         if twelve_hours and save != 1:
-                            cursor.execute("UPDATE users SET save = save + 0.25, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
-                            message = "nice. 0.25 saves earned ({save}/1 in total)".format(save=str(save + 0.25).rstrip("0").rstrip("."))
+                            cursor.execute("UPDATE users SET save = save + 0.5, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            message = "nice. 0.5 saves earned ({save}/1 in total)".format(save=str(save + 0.5).rstrip("0").rstrip("."))
 
                         else:
                             message = "nice yeah"
@@ -371,8 +372,8 @@ async def ub(ctx):
                         cursor.execute("UPDATE users SET math = math + 1 WHERE id = %s", (str(interaction.user.id),))
 
                         if twelve_hours and save != 1:
-                            cursor.execute("UPDATE users SET save = save + 0.25, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
-                            message = "nice. 0.25 saves earned ({save}/1 in total)".format(save=str(save + 0.25).rstrip("0").rstrip("."))
+                            cursor.execute("UPDATE users SET save = save + 0.5, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            message = "nice. 0.5 saves earned ({save}/1 in total)".format(save=str(save + 0.5).rstrip("0").rstrip("."))
 
                         else:
                             message = "nice yeah"
@@ -418,8 +419,8 @@ async def ub(ctx):
                         cursor.execute("UPDATE users SET math = math + 1 WHERE id = %s", (str(interaction.user.id),))
 
                         if twelve_hours and save != 1:
-                            cursor.execute("UPDATE users SET save = save + 0.25, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
-                            message = "nice. 0.25 saves earned ({save}/1 in total)".format(save=str(save + 0.25).rstrip("0").rstrip("."))
+                            cursor.execute("UPDATE users SET save = save + 0.5, time = %s WHERE id = %s", (str(datetime.datetime.now()), str(interaction.user.id)))
+                            message = "nice. 0.5 saves earned ({save}/1 in total)".format(save=str(save + 0.5).rstrip("0").rstrip("."))
 
                         else:
                             message = "nice yeah"
