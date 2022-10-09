@@ -135,10 +135,10 @@ async def user(ctx, *user):
     if deez_nuts > 0:
         leaderboard_deez_nuts = func.sortUsersDeezNuts()
         index_deez_nuts = [idx for idx, tup in enumerate(leaderboard_deez_nuts) if (tup[0]) == str(id)][0] + 1
-        description = "correct rate: **{correct_rate}%**\ntotal correct: **{correct}**\ntotal incorrect: **{incorrect}**\nscore: **{score} (#{index})**\ndeez nuts: **{deez_nuts} (#{index_deez_nuts})**\nsaves: {save}/1".format(
+        description = "correct rate: **{correct_rate}%**\ntotal correct: **{correct}**\ntotal incorrect: **{incorrect}**\nscore: **{score} (#{index})**\ndeez nuts: **{deez_nuts} (#{index_deez_nuts})**\nsaves: **{save}/1**".format(
                         correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index), deez_nuts=str(deez_nuts), index_deez_nuts=str(index_deez_nuts), save=str(save).rstrip("0").rstrip("."))
     else:
-        description = "correct rate: **{correct_rate}%**\ntotal correct: **{correct}**\ntotal incorrect: **{incorrect}**\nscore: **{score} (#{index})**\nsaves: {save}/1".format(
+        description = "correct rate: **{correct_rate}%**\ntotal correct: **{correct}**\ntotal incorrect: **{incorrect}**\nscore: **{score} (#{index})**\nsaves: **{save}/1**".format(
                         correct_rate=str(correct_rate), correct=str(correct), incorrect=str(incorrect), score=str(score), index=str(index), save=str(save).rstrip("0").rstrip("."))
 
     username = ctx.message.guild.get_member(int(id))
