@@ -80,18 +80,20 @@ async def on_message(message):
                     cursor.execute("UPDATE users SET save = 0 WHERE id = %s", (str(message.author.id),))
                     db.commit()
                     db.close()
+                    
+                else:
 
-                await message.add_reaction('❌')
-                cursor.execute("UPDATE server SET current = %s, `last counter id` = %s, `past high score` = %s", ("", "", "false"))
-                db.commit()
-                db.close()
+                    await message.add_reaction('❌')
+                    cursor.execute("UPDATE server SET current = %s, `last counter id` = %s, `past high score` = %s", ("", "", "false"))
+                    db.commit()
+                    db.close()
 
-                if str(message.author.id) == last_counter_id:
-                    await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! DONT COUNT TWICE IN A ROW".format(id=message.author.id, current=current))
-                elif count != func.nextLetter(current):
-                    await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
+                    if str(message.author.id) == last_counter_id:
+                        await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! DONT COUNT TWICE IN A ROW".format(id=message.author.id, current=current))
+                    elif count != func.nextLetter(current):
+                        await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
 
-                func.updateScore(message.author.id, "incorrect", False)
+                    func.updateScore(message.author.id, "incorrect", False)
             
     await bot.process_commands(message)
 
