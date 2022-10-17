@@ -75,6 +75,7 @@ async def on_message(message):
                 save = cursor.fetchone()[0]
 
                 if save == 1:
+
                     await message.add_reaction('⚠️')
                     await message.channel.send("wrong dumbass your save has been used")
                     cursor.execute("UPDATE users SET save = 0 WHERE id = %s", (str(message.author.id),))
@@ -93,7 +94,7 @@ async def on_message(message):
                     elif count != func.nextLetter(current):
                         await message.channel.send("<@{id}> RUINED IT at **{current}**!!!!! WRONG LETTER!!!!! dumbass".format(id=message.author.id, current=current))
 
-                    func.updateScore(message.author.id, "incorrect", False)
+                func.updateScore(message.author.id, "incorrect", False)
             
     await bot.process_commands(message)
 
