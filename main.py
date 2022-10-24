@@ -102,7 +102,7 @@ async def on_message(message):
 @bot.command()
 async def help(ctx):
 
-    commands = "**g!user [@user/userid]** - get user stats\n**g!server** - get server stats\n**g!lb [deez nuts]** - display leaderboard\n**g!ub** - math question to earn saves"
+    commands = "**g!user [@user/userid]** - get user stats\n**g!server** - get server stats\n**g!lb** - display leaderboard\n**g!lb deez nuts** - display DEEZ NUTS (leaderboard)\n**g!ub** - math question to earn saves"
 
     help = discord.Embed(
         title = "glalphabet",
