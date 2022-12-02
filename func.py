@@ -15,7 +15,7 @@ def connect():
         host="us-cdbr-east-06.cleardb.net",
         user=USER,
         passwd=PASSWD,
-        database="heroku_35067e70ff92b61"
+        database="heroku_50de5be591848c5"
     )
 
     return(db, db.cursor())
